@@ -1,20 +1,47 @@
 import os
-from flask import Flask, render_template, request, url_for, redirect, session,send_from_directory
-from lxml import etree
-import re
-from functools import wraps
-from werkzeug import secure_filename
-from flask import send_file
 
-from flask_uploads import UploadSet, configure_uploads, TEXT,patch_request_class
+from flask import (Flask, redirect, render_template, request,
+                   send_from_directory, session, url_for)
 
-
-from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileRequired, FileAllowed
-from wtforms import SubmitField
-
-import time
+try:
+  from lxml import etree
+  print("running with lxml.etree")
+except ImportError:
+  try:
+    # Python 2.5
+    import xml.etree.cElementTree as etree
+    print("running with cElementTree on Python 2.5+")
+  except ImportError:
+    try:
+      # Python 2.5
+      import xml.etree.ElementTree as etree
+      print("running with ElementTree on Python 2.5+")
+    except ImportError:
+      try:
+        # normal cElementTree install
+        import cElementTree as etree
+        print("running with cElementTree")
+      except ImportError:
+        try:
+          # normal ElementTree install
+          import elementtree.ElementTree as etree
+          print("running with ElementTree")
+        except ImportError:
+          print("Failed to import ElementTree from any known place")
 import hashlib
+import re
+import time
+from functools import wraps
+from xml.etree import ElementTree
+from xml.dom import minidom
+
+from flask import send_file
+from flask_uploads import (TEXT, UploadSet, configure_uploads,
+                           patch_request_class)
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed, FileField, FileRequired
+from werkzeug.utils import cached_property, secure_filename
+from wtforms import SubmitField
 
 #flask_uploads.py
 # def extension(filename):
@@ -72,7 +99,6 @@ def index(edx2=None,moodle=None,arr=None,output=None,totalStr=None):
 		return render_template('items/index.html', **locals())
 
 
-
 def gift2edx(file):
 	# 空白檔案
 	if os.stat(file).st_size == 0:
@@ -89,7 +115,7 @@ def gift2edx(file):
 
 
 
-	#例外 生成txt
+	#Exception generate txt
 	def show(myList):
 		for x in range(len(myList)):
 			print(myList[x],end="")
@@ -101,13 +127,13 @@ def gift2edx(file):
 	#show(lines)
 
 
-	arr = list()#不符合格式之題目
-	num = list()#放刪除不符合格式之編號
+	arr = list()#Questions that do not conform to the format
+	num = list()#Delete the number that does not conform to the format
 	x = 0
-	#圖片檔例外
+	#Picture file exception
 	while( x < (len(lines)-1)):
-		if((lines[x].find('PLUGINFILE') > -1)|(lines[x].find('img src') > -1)|(lines[x].find(' -> ') > -1)):#如果此行找到圖片檔
-			i = x #紀錄找到行 i往上找//question題號
+		if((lines[x].find('PLUGINFILE') > -1)|(lines[x].find('img src') > -1)|(lines[x].find(' -> ') > -1)):#If this line finds an image file
+			i = x #Record found line i look up//question number
 			while((lines[i].find('question:')==-1)):
 				i = i-1
 			
@@ -120,12 +146,11 @@ def gift2edx(file):
 			x = i
 		x = x+1
 	#show(arr)
-
+	
 	'''
 	for i,element in enumerate(num):
 		print(int(element),lines[element],end="\n")
 	'''
-
 	num.reverse()
 	for i,element in enumerate(num):
 		lines.pop(element)
@@ -137,10 +162,12 @@ def gift2edx(file):
 	#moodle.append([])
 	x = 0
 	index = 0
+	
 	while( x < (len(lines))):
-		if((lines[x].find('::') > -1)):#如果此行找到標頭
+		if((lines[x].find('::') > -1)):#If this line finds the header
+			
 			moodle.append([])
-			i = x #紀錄找到行 i往上找//question題號
+			i = x #Record found line i look up //question question number
 
 			while((lines[i].find('question:')==-1)):
 				i = i-1
@@ -153,10 +180,10 @@ def gift2edx(file):
 			index = index + 1
 			x = i
 		x = x+1
-	'''for i in range(len(moodle)):
-		for j in range(len(moodle[i])):
-			print(moodle[i][j])
-	'''
+	#for i in range(len(moodle)):
+#		for j in range(len(moodle[i])):
+	#		print(moodle[i][j])
+	
 	for x in range(len(lines)):
 		#lines[x]=re.sub(':.*.:\Dhtml\D',"",lines[x])
 		lines[x]=re.sub('::.*.::',"",lines[x])
@@ -183,20 +210,20 @@ def gift2edx(file):
 		if len(lines[x])==1:
 			lines[x] = lines[x].replace("\n","")
 
-	#show(lines)#印出簡化過後的版本
+	#show(lines)#Print out a simplified version
 
-	#計算總題目數量
+	#Calculate the total number of questions
 	total = 0
 	for x in range(len(lines)):
 		if((lines[x][0] == '<')|(lines[x].find('{') > -1)):
 			total= total+1
-	#print('\n')
-	#print('總題數',total)
+	print('\n')
+	print('Total number of questions: ',total)
 
 
-	#以下判斷加入XML格式
+	#The following judgment is added to the XML format
 
-	#題目root tag 設為<problem>
+	#Title root tag is set<problem>
 	root = etree.Element("problem")
 
 	def Multiple_choice_question(q_n,index,element,lines):
@@ -233,9 +260,11 @@ def gift2edx(file):
 				choice_F = etree.SubElement(q_group,"choice")
 				choice_F.set("correct","false")
 				str2 = lines[element + i]
+				str2 = re.sub('[%][-][0-9.]*[%]','',str2)
+				str2 = re.sub('[~]','',str2)
 				str2 = str2.replace("<p>","")
 				str2 = str2.replace("</p>","")
-				choice_F.text = str2[2:len(str2)]
+				choice_F.text = str2[1:len(str2)]
 				
 	def Multiple_selection_question(q_n,index,element,lines):
 		#print (index+1,".it is a Multiple_selection_question",lines[element])
@@ -264,8 +293,7 @@ def gift2edx(file):
 					str1 = lines[element + i]
 					str1 = str1.replace("<p>","")
 					str1 = str1.replace("</p>","")
-					str1 = re.sub('[~][%][0-9][0-9][0-9][%]','',str1)
-					str1 = re.sub('[~][%][0-9][0-9][%]','',str1)
+					str1 = re.sub('[~][%][0-9.]*[%]','',str1)
 				
 					choice_T.text = str1[1:len(str1)]
 				else:
@@ -274,7 +302,7 @@ def gift2edx(file):
 					str2 = lines[element + i]
 					str2 = str2.replace("<p>","")
 					str2 = str2.replace("</p>","")
-					str2 = re.sub('[~][%][-][0-9][0-9][%]','',str2)
+					str2 = re.sub('[~][%][-][0-9.]*[%]','',str2)
 					str2 = re.sub('[~]','',str2)
 					choice_F.text = str2[1:len(str2)]
 			else:
@@ -284,7 +312,7 @@ def gift2edx(file):
 				str2 = str2.replace("<p>","")
 				str2 = str2.replace("</p>","")
 				#str2 = str2.replace("^~%\-|0-9][0-9]%","")#^[\-|0-9][0-9]* 
-				str2 = re.sub('[~][%][-][0-9][0-9][%]','',str2)
+				str2 = re.sub('[~][%][-][0-9.]*[%]','',str2)
 				str2 = re.sub('[~]','',str2)
 				choice_F.text = str2[1:len(str2)]
 				
@@ -402,22 +430,24 @@ def gift2edx(file):
 		return a+1
 
 
-	b = 0 #題目位於lines第幾格
+	b = 0 #Where is the title in lines
 	numlist = [0]
-	errorlist = [0]#存有圖片檔的問題
-	errornum = []#紀錄出錯題目順序 以配對原先moodle題目
+	errorlist = [0]#Problems with image files
+	errornum = []#Record the order of the wrong questions to match the original moodle questions
 
 	for i in range(total):
-		# print('題目編號=',i,',起始欄位:',b)#看題目位於哪個位置
+		#print('Question number=',i,',start field:',b)#See where the question is located
 		if b<top-1:
-			b = collect(b,lines) #回傳下一個題目位置
-			numlist.append(b)#收集題目起始位置放入list
+			b = collect(b,lines) #Return the location of the next question
+			numlist.append(b) #Collect the starting position of the question and put it into the list
 	#print(numlist)
 
 	'''
 	for i,element in enumerate(numlist):
 		print(i,element)
 	'''
+
+
 
 
 
@@ -429,20 +459,22 @@ def gift2edx(file):
 			else:
 				count = 0
 				count2 = 0
-				q_n = 0 #有幾個選項
+				q_n = 0 #There are several options
 				c = element
 				while lines[c][0] != '}':
 					if (lines[c][1]) == '=':
 						count = count + 1
 					if (lines[c][2]) == '%':
 						count2 = count2 + 1
+					else:
+						if (lines[c][1]) == '~':
+								count2 = count2 + 1
 					c = c + 1
 					q_n = q_n + 1
-				count2 = count2 #計算＃有幾個
 				#print("count = ",count,"count2 = ",count2)
 				if count == 0:
 					Multiple_selection_question(q_n,index,element,lines)
-				elif count == 1 & (count2 == 0):
+				elif count == 1 & (count2 > 1):
 					Multiple_choice_question(q_n,index,element,lines)
 				elif count == count2:
 					#print (".it is a Short_answer_question")
@@ -456,7 +488,7 @@ def gift2edx(file):
 
 
 
-	x = etree.tostring(root, encoding='unicode', method = 'xml',pretty_print=True)
+	x = etree.tostring(root, encoding='unicode', pretty_print=True)
 	#x = x.replace('&lt;','<')
 	#x = x.replace('&gt;','>')
 
@@ -464,16 +496,16 @@ def gift2edx(file):
 	x = x.replace('&amp;gt;','&gt;')
 	#print(x) #全部
 	totalStr = x 
-	#--------找\n---------
+	#--------Find\n---------
 
 
-	#--------*寫檔---------
+	#--------*Write file---------
 
 	with open("./output/output.xml", "w", encoding="utf-8") as output_file:
 		   output_file.write(x)
 	#--------------------
 
-	#--------*關檔---------
+	#--------*Close---------
 	f.close()
 	output_file.close
 	#--------------------
@@ -524,14 +556,14 @@ def gift2edx(file):
 				print(i,j,a[i][j])
 
 
-	#--------edx 單題目----------
-	#print("\n\nedx單一題目\n")
+	#--------edx Single topic----------
+	#print("\n\nedx Single topic\n")
 	#show1(edx2)
-	#--------moodle單一題目-------
-	#print("\n\nmoodle單一題目\n")
+	#--------moodle Single topic-------
+	#print("\n\nmoodle Single topic\n")
 	#show1(moodle)
-	#--------不符合格式之題目------
-	#print("\n\n不符合格式之題目\n")
+	#--------Questions that do not conform to the format------
+	#print("\n\nQuestions that do not conform to the format\n")
 	#show(arr)
 	'''
 	edx2
@@ -544,4 +576,4 @@ def gift2edx(file):
 	return edx2,moodle,arr,totalStr,output,blank
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port=5000)
+    app.run(host="0.0.0.0",port=8080)

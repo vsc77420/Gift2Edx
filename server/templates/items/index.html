@@ -6,16 +6,16 @@
 
 			<div class="card" id="first">
 				<div class="card-header">
-					<h3 class="text-danger">注意事項
+					<h3 class="text-danger">Precautions
 					</h3>
 				</div>
 				<div class="card-body">
 					<h5>
 <pre>
-1. 請使用Moodle 匯出 的 GIFT格式試題。
-2. 上傳檔案請注意檔案類型，此系統限定為txt格式。
-3. 請注意：圖片題，需要特別匯出圖片並於OpenEdu平台匯入。
-4. 目前提供GIFT轉換題型：單選題、多選題、簡答題、是非題。
+1. Please use the GIFT format test questions exported by Moodle.
+2. Please pay attention to the file type when uploading files. This system is limited to txt format.
+3. Please note: For picture questions, you need to export pictures and import them on the OpenEdu platform.
+4. GIFT conversion question types are currently available: multiple choice questions, multiple choice questions, short answer questions, true-false questions.
 </pre>
 					</h5>
 				</div>
@@ -26,19 +26,19 @@
 	</div>
 	<div class="card" id="first">
 		<div class="card-header">
-			<h3 class="text-success">上傳GIFT題目
+			<h3 class="text-success">Upload GIFT questions
 			</h3>
 		</div>
 		<div class="card-body">
 				
 				{% if blank %}
 				<div class="alert alert-danger" role="alert">
-					上傳檔案為空白檔案或不符合格式
+					The uploaded file is blank or does not meet the format
 				</div>
 				{% endif %}
 			{% if output %}
 			<div class="alert alert-success" role="alert">
-				已成功轉換
+				Successfully converted
 			</div>
 			{% endif %}
 			<form method="POST" enctype="multipart/form-data" action="/">
@@ -56,7 +56,7 @@
 					<input type="file" class="form-control" required id="text" name="text">
 				</div>
 				<div class="text-center">
-					<input type="submit" id='submit' class="btn btn-default" name="submit" value="進行轉換">
+					<input type="submit" id='submit' class="btn btn-default" name="submit" value="Convert">
 				</div>
 			</form>
 		</div>
@@ -65,9 +65,9 @@
 	<div class="row portfolio-item">
 		<div class="col-lg-6">
 			{% if output %}
-			<a href="{{ url_for('downloadFile') }}" class="btn btn-info">下載已轉換之完整edX題目(格式XML)</a>
+			<a href="{{ url_for('downloadFile') }}" class="btn btn-info">Download the converted complete edX question (format XML)</a>
 			{% endif %} {% if arr %}
-			<a href="#arr" class="btn btn-dark">點我看格式不符之題目</a>
+			<a href="#arr" class="btn btn-dark">Click me to see the problem of format discrepancy</a>
 			{% endif %}
 		</div>
 	</div>
@@ -80,7 +80,7 @@
 				<div class="card">
 					<div class="card-header">
 						<a class="card-link text-info" data-toggle="collapse" href=#collapseedxall>
-							#edX完整題目
+							#edX complete question
 						</a>
 					</div>
 					<div class="collapse" data-parent="#accordionedxall" id=collapseedxall>
@@ -89,7 +89,7 @@
 							<textarea id=edxall class="card-text">{{totalStr}}</textarea>
 						</div>
 						<div class="card-footer">
-							<button data-clipboard-target=#edxall class="btn btn-outline-info">複製題目</button>
+							<button data-clipboard-target=#edxall class="btn btn-outline-info">Copy title</button>
 						</div>
 					</div>
 				</div>
@@ -102,12 +102,12 @@
 
 		<div class="col-lg-6 mb-12 ">
 			<div id="accordionedx">
-				{% if edx2 %}<h4>edX格式單題顯示</h4>{% for question in edx2 %}
+				{% if edx2 %}<h4>Single question display in edX format</h4>{% for question in edx2 %}
 
 				<div class="card">
 					<div class="card-header">
 						<a class="card-link text-info" data-toggle="collapse" href=#collapseedx{{loop.index}}>
-							#edX格式題目{{loop.index}}
+							#edX format title{{loop.index}}
 						</a>
 					</div>
 					<div class="collapse" data-parent="#accordionedx" id=collapseedx{{loop.index}}>
@@ -117,7 +117,7 @@
 {% endfor %}{{p2}}</pre>
 						</div>
 						<div class="card-footer">
-							<button data-clipboard-target=#edx{{loop.index}} class="btn btn-outline-info">複製題目{{loop.index}}</button>
+							<button data-clipboard-target=#edx{{loop.index}} class="btn btn-outline-info">Copy title{{loop.index}}</button>
 						</div>
 					</div>
 				</div>
@@ -129,12 +129,12 @@
 		<div class="col-lg-6 mb-12 ">
 			<div id="accordionmoodle">
 
-				{% if moodle %}<h4>GIFT格式單題顯示</h4>{% for question in moodle %}
+				{% if moodle %}<h4>GIFT format single question display</h4>{% for question in moodle %}
 
 				<div class="card">
 					<div class="card-header">
 						<a class="card-link text-info" data-toggle="collapse" href=#collapsemoodle{{loop.index}}>
-							#GIFT格式題目{{loop.index}}
+							#GIFT format questions{{loop.index}}
 						</a>
 					</div>
 					<div class="collapse" data-parent="#accordionmoodle" id=collapsemoodle{{loop.index}}>
@@ -144,7 +144,7 @@
 {% endfor %}</pre>
 						</div>
 						<div class="card-footer">
-							<button data-clipboard-target=#moodle{{loop.index}} class="btn btn-outline-info">複製題目{{loop.index}}</button>
+							<button data-clipboard-target=#moodle{{loop.index}} class="btn btn-outline-info">Copy title{{loop.index}}</button>
 						</div>
 					</div>
 				</div>
@@ -158,9 +158,9 @@
 			{% if arr %}
 			<div class="card" id="arr">
 				<div class="card-header">
-					<h3 class="text-danger">格式不符之題目
-						<button data-clipboard-target=#arrcopy class="btn btn-outline-danger">複製題目</button>
-						<a href="#top"><button class="btn btn-outline-dark">返回上層</button></a>
+					<h3 class="text-danger">Questions with inconsistent format
+						<button data-clipboard-target=#arrcopy class="btn btn-outline-danger">Copy title</button>
+						<a href="#top"><button class="btn btn-outline-dark">Return to the upper level</button></a>
 					</h3>
 				</div>
 				<div class="card-body">
